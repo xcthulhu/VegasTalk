@@ -43,7 +43,7 @@ end
 function RawBlock(el)
     if starts_with("\\begin{tikzpicture}", el.text) then
         local filetype = extension_for[FORMAT] or "svg"
-        local fname = pandoc.sha1(el.text) .. "." .. filetype
+        local fname = "generated_figures/" .. pandoc.sha1(el.text) .. "." .. filetype
         if not file_exists(fname) then
             tikz2image(el.text, filetype, fname)
         end

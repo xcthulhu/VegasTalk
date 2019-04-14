@@ -4,7 +4,10 @@ ENTRIES=$(wildcard ../entries/*.md)
 all: blog.pdf
 
 blog.pdf: $(ENTRIES)
-	nix-shell --run "pandoc $< -o $@ --from markdown --template eisvogel.tex --listings --filter=pandoc-citeproc --lua-filter=tikz.lua --biblio=bibliography.bib --pdf-engine=xelatex"
+	mkdir -p ../generated_figures
+	rm -f generated_figures
+	ln -s ../generated_figures .
+	nix-shell --run "pandoc $< -o $@ --from markdown --template eisvogel.tex --listings --filter=pandoc-citeproc --lua-filter=../pandoc_filters/tikz.lua --biblio=../bibliography/bibliography.bib --pdf-engine=xelatex" ../shell.nix
 
 clean:
-	rm -rf *.pdf
+	rm -rf *.pdf generated_figures/*.pdf generated_figures
