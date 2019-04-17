@@ -47,6 +47,14 @@ function RawBlock(el)
         if not file_exists(fname) then
             tikz2image(el.text, filetype, fname)
         end
+        -- local alt = {}
+        -- if el.alt then
+        --    alt = el.alt
+        -- end
+        -- local title = {}
+        -- if el.title then
+        --    title = el.title
+        -- end
         return pandoc.Para({pandoc.Image({}, fname)})
     else
        return el
