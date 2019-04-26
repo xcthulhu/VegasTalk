@@ -8,9 +8,9 @@ lang: "en"
 listings-disable-line-numbers: true
 ...
 
-# Limits In Haskell
+# Introduction to Adjunctions and Limits In Haskell
 
-[///]: # (
+[//]: # (
 ```haskell
 module Main where
 import Control.Arrow ((&&&), (|||))
@@ -21,7 +21,7 @@ import Control.Applicative (Applicative, (<*>))
 
 ## Limits
 
-Today I want to talk  about _limits_ and _colimits_ in Haskell.
+Today I want to talk  about simple _limits_ and _colimits_ in Haskell.
 
 Limits and colimits are objects in category theory.  They are defined in terms of functors. The full definition is a bit abstract.  I will start with an simple definition of a limit in Haskell due to Ed Kmett.  The original source can be found in [`category-extras`][1].
 
@@ -54,8 +54,10 @@ A continuous type constructor has a pair of isomorphisms associated with it:
 
 ```haskell
 class Continuous f where
-  composeLimit   :: f (Limit g)     -> Limit (f :.: g)
-  decomposeLimit :: Limit (f :.: g) -> f (Limit g)
+  composeLimit   :: f (Limit g)
+                 -> Limit (f :.: g)
+  decomposeLimit :: Limit (f :.: g)
+                 -> f (Limit g)
 ```
 
 One example of a continuous functor is the reader monad `(->) r`.
@@ -63,7 +65,7 @@ One example of a continuous functor is the reader monad `(->) r`.
 ```haskell
 instance Continuous ((->) r) where
   composeLimit r2LimitG =
-    Limit (Comp1 (unLimit . r2LimitG))
+    Limit $ Comp1 (unLimit . r2LimitG)
   decomposeLimit limit r =
     Limit $ (unComp1 (unLimit limit)) r
 ```
@@ -81,9 +83,10 @@ In this case we say $F$ is the _left_ adjoint and $G$ is the _right_ adjoint.  I
 In Haskell there is an _internal_ hom-set.  It is the function arrow `(->)`.  Following [`Data.Functor.Adjunction`][4], adjunctions are defined in Haskell by:
 
 ```haskell
-class (Functor f, Functor u) => Adjunction f u | f -> u, u -> f where
-  leftAdjunct  :: (f a -> b) -> a -> u b
-  rightAdjunct :: (a -> u b) -> f a -> b
+class (Functor f, Functor u)
+  => Adjunction f u | f -> u, u -> f where
+    leftAdjunct  :: (f a -> b) -> a -> u b
+    rightAdjunct :: (a -> u b) -> f a -> b
 ```
 
 One adjunction in Haskell is between the _product comonad_ `(,) r` and the _reader monad_ `(->) r`:
@@ -155,11 +158,16 @@ class Functor f => Coapplicative f where
 This is in part because all left adjoints preserve _finite coproducts_:
 
 ```haskell
-uncozip :: Functor f => Either (f a) (f b) -> f (Either a b)
+uncozip :: Functor f
+        => Either (f a) (f b)
+        -> f (Either a b)
 uncozip = fmap Left ||| fmap Right
 
-cozipL :: Adjunction f u => f (Either a b) -> Either (f a) (f b)
-cozipL = rightAdjunct (leftAdjunct Left ||| leftAdjunct Right)
+cozipL :: Adjunction f u
+       => f (Either a b)
+       -> Either (f a) (f b)
+cozipL = rightAdjunct
+  (leftAdjunct Left ||| leftAdjunct Right)
 ```
 
 Dually, all right adjoints preserve _finite products_:
@@ -242,7 +250,7 @@ class Cocontinuous f where
 
 A limit is a sort of infinitary product.  A colimit is a sort of infinitary sum.  Continuity and cocontinuity are about preserving this algebraic structure.
 
-Left adjoints are cocontinuous:
+Left adjoints are _cocontinuous_:
 
 ```haskell
 instance Adjunction f u
@@ -253,7 +261,26 @@ instance Adjunction f u
       fmap Colimit . unComp1 $ fg
 ```
 
+And right adjoints are _continuous_:
+
+```haskell
+instance Adjunction f u
+  => Continuous (RightAdjoint f u) where
+    composeLimit uLimitG =
+      Limit $ Comp1 . fmap unLimit $ uLimitG
+    decomposeLimit =
+      leftAdjunct (\fLimitUG ->
+        Limit $ rightAdjunct (unComp1 . unLimit) fLimitUG)
+```
+
 \begin{tikzpicture}
+% title:     My Tikz Picture
+% caption:   Some cool caption
+% id:        mytikzpic_id
+% class:     mytikzpic_class1
+% class:     mytikzpic_class2
+% attr1:     Random Attribute 1
+% attr2:     Random Attribute 2
 
 \def \n {5}
 \def \radius {3cm}
@@ -267,6 +294,8 @@ instance Adjunction f u
 }
 \end{tikzpicture}
 
+![](figures/diagram.svg "title"){.class width=30 height=20px}
+
 [1]: https://github.com/ekmett/category-extras/blob/6347b17608539936de73ee2cc1e997b3e8396a31/Control/Functor/Limit.hs#L24-L45
 [2]: https://github.com/ghc/packages-base/blob/52c0b09036c36f1ed928663abb2f295fd36a88bb/GHC/Generics.hs#L611-L614
 [3]: https://ncatlab.org/nlab/show/hom-set
@@ -276,12 +305,13 @@ instance Adjunction f u
 [7]: https://hackage.haskell.org/package/base-4.12.0.0/docs/src/Data.List.NonEmpty.html#unzip
 [8]: https://hackage.haskell.org/package/adjunctions-4.4/docs/Data-Functor-Adjunction.html
 
-[//]: # (
+[///]: # (
 ```haskell
 main = pure ()
 ```
 Local Variables:
 eval: (projectile-mode)
-compile-command: make blog.html
+compile-command: "make -C .. 20190410_Adjunctions_and_Continuity-haskell-check all"
+projectile-project-compilation-cmd: "make 20190410_Adjunctions_and_Continuity-haskell-check all"
 End:
 )
